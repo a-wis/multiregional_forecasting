@@ -16,6 +16,10 @@ require(ggpubr)
 require(stats)
 #the code also uses mapvalues funcation from plyr package
 
+source("code/data_processing.R")
+
+
+
 #transformations #####
 mat_m=gen.forecast(inp = fit_m0124,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =T)
 mat_f=gen.forecast(inp = fit_f0016,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = T)
