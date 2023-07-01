@@ -4,7 +4,7 @@ This file describes the use of the code for preparing probabilistic subnational 
 
 **A unified framework for probabilistic forecasts of subnational populations**
 
-Copyright: (anonymised), 2020
+Copyright: (anonymised), 2023
 
 This code will be available on GitHub
 
