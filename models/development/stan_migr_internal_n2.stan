@@ -1,6 +1,3 @@
-//simplify constraints
-//use design matrix for log-lin effects (or double check inputs)
-
 data {
   //building upon LC model 
   //Poisson 
@@ -26,12 +23,10 @@ transformed data{
 }
 
 parameters {
-  vector[N] A_a; 
   vector[Co] OD_a;
   vector[Co2] OD_uni;
-  real G;
-  vector[N-1] ben1;
-  vector[Co-1] ben2;
+  vector[N] ben1;
+  vector[Co] ben2;
   real OA[R,N];
   real DA[R,N];
   real O[R-1];
@@ -45,11 +40,14 @@ parameters {
   real<lower=0, upper=1> slope[2]; 
   real intercept[2];
   real snd1[Co*N*S*T];
+  real Grnd;
+  real A_arnd[N];
   // real snd2[N];
 }
 
 transformed parameters {
-  
+  vector[N] A_a;
+  real G;
   vector[N] A_b;
   vector[Co] OD_b;
   real mmd[Co*N*S*T]; 
@@ -59,15 +57,12 @@ transformed parameters {
   real cO[Co];
   real cD[Co];
   
-  for (i in 1:(N-1)){  
-    A_b[i] = ben1[i];
-  }
-  A_b[N] = 1-sum(ben1[1:(N-1)]);
+  for (i in 1:N) A_a[i] = A_arnd[i] * sig2[1];
+  G = sig2[2]*Grnd;
   
-  for (i in 1:(Co-1)){  
-    OD_b[i] = ben2[i];
-  }
-  OD_b[Co] = 1-sum(ben2[1:(Co-1)]);
+  for (i in 1:N) A_b[i] = ben1[i]/sum(ben1[1:N]);
+  
+  for (i in 1:Co) OD_b[i] = ben2[i]/sum(ben2[1:Co]);
   
   for (i in 1:R){
     for (j in 1:(R-1)){
@@ -111,13 +106,13 @@ model {
   real taub2;
   
   // priors for precision
-  taub1 = N*N;
-  taub2 = Co*Co;
-  sig1  ~ cauchy(0, 2); 
-  sigk[1]  ~ cauchy(0, 2);
-  sigk[2]  ~ cauchy(0, 2);
+  taub1 = 1.0/(N);
+  taub2 = 1.0/Co;
+  sig1  ~ student_t(2.5,0,25);
+  sigk[1]  ~ student_t(2.5,0,25);
+  sigk[2]  ~ student_t(2.5,0,25);
   for (j in 1:4){  
-    sig2[j]  ~ cauchy(0, 2);
+    sig2[j]  ~ student_t(2.5,0,25);
   }
   for (j in 1:4){  
     sig3[j]  ~ normal(0, 1);
@@ -128,7 +123,7 @@ model {
     // A[a] ~ normal(0,sig2[1]);
     // }
   
-  A_a ~ normal(0,sig2[1]);
+  // A_a ~ normal(0,sig2[1]);
   
   
   for (r in 1:Co){
@@ -142,7 +137,7 @@ model {
   // for (s in 1:S){
     //   G[s] ~ normal(0,sig2[2]);
     // }  
-  G ~ normal(0,sig2[2]);
+  // G ~ normal(0,sig2[2]);
   
   // priors for random effects  
   O ~ normal(0,sig2[3]); //sig3[3]
@@ -157,23 +152,9 @@ model {
   
   
   // prior for A_b  
-  for (i in 1:(N-1)) mb1[i] = 1.0/N;
-  for (i in 1:(N-1)){
-    for (j in 1:(N-1)){
-      mat_R1[i,j] = mat_R[i,j]*taub1;
-    }
-  }
-  ben1 ~ multi_normal_prec(mb1,mat_R1);
-  
+  ben1 ~ normal(1.0/N,taub1);
   // prior for OD_b  
-  for (i in 1:(Co-1)) mb2[i] = 1.0/Co;
-  for (i in 1:(Co-1)){
-    for (j in 1:(Co-1)){
-      mat_R2[i,j] = mat_R[i,j]*taub2;
-    }
-  }
-  ben2 ~ multi_normal_prec(mb2,mat_R2);
-  
+  ben2 ~ normal(1.0/N,taub2);
   // time series model AR1
   intercept ~ normal(0,10);
   slope ~ normal(0,1);
@@ -185,6 +166,8 @@ model {
   
   //Model
   snd1 ~ normal(0,1);
+    Grnd ~ normal(0,1);
+  A_arnd ~ normal(0,1);
   d ~ poisson_log(mpd);
   
 }
@@ -193,7 +176,8 @@ generated quantities {
   real kf1[F];
   real kf2[F];
   real mmd_f[Co*N*S*F];
-  
+  vector[Co*N*S*T] log_lik;
+   
   kf1[1] = normal_rng( intercept[1] + slope[1]*k1[T-1], sigk[1]);
   kf2[1] = normal_rng( intercept[2] + slope[2]*k2[T-1], sigk[2]);
   for (t in 2:F) kf1[t] = normal_rng(intercept[1] + slope[1]*kf1[t-1], sigk[1]);
@@ -207,4 +191,7 @@ generated quantities {
       }
     }
   }
+  
+  for (i in 1:(Co*N*S*T)) log_lik[i] = poisson_log_lpmf(d[i]|mpd[i]);
+  
 }

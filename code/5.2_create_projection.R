@@ -10,13 +10,18 @@ source("code/functions_multiregional_projection.R")
 # source("code/component_estimation.R") #this will take long time (about 3-11 hours per pop component)
 
 #transforming forecasts of components ####
-mat_m=gen.forecast(inp = fit_m0124,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =F)
-mat_f=gen.forecast(inp = fit_f0016,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = F)
-mat_im=gen.forecast(inp = fit_imi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
-mat_em=gen.forecast(inp = fit_emi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
-mat_od=gen.forecast(inp = fit03111,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =F)
+mat_m=gen.forecast(inp = fit_m02,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =F)
+mat_f=gen.forecast(inp = fit_f01,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = F)
+mat_im=gen.forecast(inp = fit_imi031,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
+mat_em=gen.forecast(inp = fit_emi03,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
+mat_od=gen.forecast(inp = fit08_04,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =F)
 
-
+#old 2020
+# mat_m=gen.forecast(inp = fit_m0124,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =F)
+# mat_f=gen.forecast(inp = fit_f0016,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = F)
+# mat_im=gen.forecast(inp = fit_imi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
+# mat_em=gen.forecast(inp = fit_emi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =F)
+# mat_od=gen.forecast(inp = fit03111,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =F)
 # changing dimensions ####
 #mortality 
 inp_m4<-aperm(array(t(exp(mat_m)),c(1000,8,15,2,18)),c(1,2,5,4,3))#rast

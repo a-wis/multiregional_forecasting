@@ -14,18 +14,24 @@ require(ggplot2)
 require(ggfan)
 require(ggpubr)
 require(stats)
+require(ggh4x)
 #the code also uses mapvalues funcation from plyr package
 
-source("code/data_processing.R")
-
+source("code/1_data_processing.R")
+source("code/5.0_functions_forecasts_transformations.R")
 
 
 #transformations #####
-mat_m=gen.forecast(inp = fit_m0124,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =T)
-mat_f=gen.forecast(inp = fit_f0016,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = T)
-mat_im=gen.forecast(inp = fit_imi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
-mat_em=gen.forecast(inp = fit_emi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
-mat_od=gen.forecast(inp = fit03111,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =T)
+# mat_m=gen.forecast(inp = fit_m0124,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =T)
+# mat_f=gen.forecast(inp = fit_f0016,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = T)
+# mat_im=gen.forecast(inp = fit_imi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
+# mat_em=gen.forecast(inp = fit_emi0044,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
+# mat_od=gen.forecast(inp = fit05_01,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =T)
+mat_m=gen.forecast(inp = fit_m02,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =T)
+mat_f=gen.forecast(inp = fit_f01,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = T)
+mat_im=gen.forecast(inp = fit_imi031,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
+mat_em=gen.forecast(inp = fit_emi02,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
+mat_od=gen.forecast(inp = fit08_04,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =T)
 
 #creating population projection (or has to be read in, if previously saved)
 source("code/create_projection.R")
@@ -54,7 +60,8 @@ t_od = transform.df(mat_obj = mat_od, yd0=1981, ydl=2006, yf0=2007, yfl=2021, da
 
 #preparation of data for plotting ####
 #Preparation: internal migration ####
-todd = input_au %>% group_by(Reg_O,Reg_D,year,S) %>% #imi for regions
+##by sex
+todd = input_au %>% group_by(Reg_O,Reg_D,Corridor,year,S) %>% #imi for regions
   summarise(dat_x=log10(mean(Flow/x))) %>%
   ungroup() %>%
   mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
@@ -78,10 +85,62 @@ tod3111l = t_od %>% mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
   rename(Sex=S) %>%
   left_join(todd) %>%
   gather("quantile","x",`0.025`:`0.975`) %>%
-  mutate(quantile=as.numeric(quantile)) 
+  mutate(quantile=as.numeric(quantile),
+         levels=10^(x)) 
+
+##total
+todd = input_au %>% group_by(Reg_O,Reg_D,Corridor,year) %>% #S removed
+  summarise(dat_x=log10(mean(Flow/x))) %>%
+  ungroup() %>%
+  mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
+  mutate(Reg_O=plyr::mapvalues(Reg_O,1:8,Regn),Reg_D=plyr::mapvalues(Reg_D,1:8,Regn))
+
+tod3111l = t_od %>% mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
+  group_by(Reg_O,Reg_D,year,Iter) %>%
+  summarise(x=log10(mean(x))) %>% 
+  ungroup() %>%
+  group_by(Reg_O,Reg_D,year) %>%
+  # summarise(q25=quantile(x,c(.1)),q50=quantile(x,c(.5)),q75=quantile(x,c(.9))) %>%
+  summarise(`0.025`=quantile(x,c(.025)),
+            `0.1`=quantile(x,c(.1)),
+            `0.25`=quantile(x,c(.25)),
+            `0.5`=quantile(x,c(.5)),
+            `0.75`=quantile(x,c(.75)),
+            `0.9`=quantile(x,c(.9)),
+            `0.975`=quantile(x,c(.975))) %>%
+  ungroup() %>% 
+  mutate(Reg_O=plyr::mapvalues(Reg_O,1:8,Regn),Reg_D=plyr::mapvalues(Reg_D,1:8,Regn)) %>%
+  left_join(todd) %>%
+  gather("quantile","x",`0.025`:`0.975`) %>%
+  mutate(quantile=as.numeric(quantile),
+         levels=10^(x)) 
+
+# levels
+tod3111 = t_od %>% mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
+  group_by(Reg_O,Reg_D,year,S,Iter) %>%
+  summarise(x=(mean(x))) %>% 
+  ungroup() %>%
+  group_by(Reg_O,Reg_D,year,S) %>%
+  # summarise(q25=quantile(x,c(.1)),q50=quantile(x,c(.5)),q75=quantile(x,c(.9))) %>%
+  summarise(`0.025`=quantile(x,c(.025)),
+            `0.1`=quantile(x,c(.1)),
+            `0.25`=quantile(x,c(.25)),
+            `0.5`=quantile(x,c(.5)),
+            `0.75`=quantile(x,c(.75)),
+            `0.9`=quantile(x,c(.9)),
+            `0.975`=quantile(x,c(.975))) %>%
+  ungroup() %>% 
+  mutate(Reg_O=plyr::mapvalues(Reg_O,1:8,Regn),Reg_D=plyr::mapvalues(Reg_D,1:8,Regn)) %>%
+  rename(Sex=S) %>%
+  left_join(todd) %>%
+  gather("quantile","x",`0.025`:`0.975`) %>%
+  mutate(quantile=as.numeric(quantile),
+         levels=exp(x)) 
 
 
-##Preparation: fertility ####
+
+
+#Preparation: fertility ####
 #TFR total for all regions by year 
 tfrdt = births_8116 %>% group_by(age,year) %>% #total TFR for AU
   summarise(births=sum(births),ERP=sum(ERP)) %>% 
@@ -117,7 +176,7 @@ tfr16 = t_f16 %>% group_by(Reg,year,Iter) %>%
   mutate(quantile=as.numeric(quantile), Reg=plyr::mapvalues(Reg,1:8,Regn))
 
 
-##Preparation: mortality ####
+#Preparation: mortality ####
 #lex
 lexd0 = lexd %>% group_by(Reg,A,S,year) %>% #imi for regions
   filter(A=="0-4") %>% 
@@ -142,7 +201,7 @@ lex0.14 = t_m14 %>% filter(A=="0-4") %>%
 
 
 
-#Preparation: immigration ###
+#Preparation: immigration ####
 trans.imig.tot<-function(inp=t_imi04, FUN=log){
   timil = intmigr_8116 %>% group_by(Reg,year,S) %>% #imi for regions
     summarise(dat_x=FUN(sum(immig))) %>%
@@ -166,7 +225,27 @@ trans.imig.tot<-function(inp=t_imi04, FUN=log){
     mutate(Reg=plyr::mapvalues(Reg,1:8,Regn), S = case_when(S=="F" ~ "Female", S=="M" ~ "Male")) %>% rename(Sex=S)
   return(out)
 }
-timi44l10=trans.imig.tot(t_imi44,FUN=log10)
+timi031l=trans.imig.tot(t_imi44,FUN=log10)
+# timi44l10=trans.imig.tot(t_imi44,FUN=log10)
+
+t_imid = intmigr_8116 %>% group_by(year) %>% #imi for regions
+  summarise(dat_x=sum(immig)) %>%
+  ungroup()
+t_imitot=t_imi44 %>% group_by(year,Iter) %>%
+  summarise(x=sum(x)) %>% 
+  ungroup() %>%
+  group_by(year) %>%
+  summarise(`0.025`=quantile(x,c(.025)),
+            `0.1`=quantile(x,c(.1)),
+            `0.25`=quantile(x,c(.25)),
+            `0.5`=quantile(x,c(.5)),
+            `0.75`=quantile(x,c(.75)),
+            `0.9`=quantile(x,c(.9)),
+            `0.975`=quantile(x,c(.975))) %>%
+  ungroup() %>%
+  left_join(t_imid) %>%
+  gather("quantile","x",`0.025`:`0.975`) %>%
+  mutate(quantile=as.numeric(quantile)) 
 
 
 #Preparation: emigration ####
@@ -192,10 +271,11 @@ trans.emig.tot<-function(inp,FUN=log10){
     mutate(Reg=plyr::mapvalues(Reg,1:8,Regn), S = case_when(S=="F" ~ "Female", S=="M" ~ "Male")) %>% rename(Sex=S)
   return(out)
 }
-temi44l10=trans.emig.tot(t_emi44,FUN=log10)
+temi02l=trans.emig.tot(t_emi44,FUN=log10)
+# temi44l10=trans.emig.tot(t_emi44,FUN=log10)
 
 #joining immigration and emigration into one data.f
-migr44l10 = bind_rows("Immigration counts"=timi44l10,"Emigration rates"=temi44l10,.id = "component")
+migrl10 = bind_rows("Immigration counts"=timi031l,"Emigration rates"=temi02l,.id = "component")
 
 
 
@@ -302,27 +382,40 @@ ERP_pop4 = ERP_pop %>% group_by(year) %>% #imi for regions
   summarise(ERP=sum(ERP)) %>%
   ungroup() 
 
+Pf.df40 = Pf.df  %>% rename(Iter=Var1, Reg=Var2, A=Var3, S=Var4, year=Var5,x=Freq) %>%
+  mutate(Iter=as.character(plyr::mapvalues(Iter,levels(Iter),1:1000)),
+         Reg=plyr::mapvalues(Reg,levels(Reg),1:8),
+         A=plyr::mapvalues(A,levels(A),levels(ERP_pop$A)),
+         S=plyr::mapvalues(S,levels(S),levels(ERP_pop$S)),
+         year=as.integer(2011+5*as.integer(plyr::mapvalues(year,levels(year),seq(2016,2026,5))))) %>%
+  group_by(Iter,year) %>%
+  summarise(x=sum(x)) %>%
+  ungroup()
+
 # Plotting #####################################################################
 #
 
 #Plots: internal migration#####
-ggplot(data=tod3111l %>% filter(Sex=="Males"),
+ggplot(data=tod3111l, #%>% filter(Sex=="Males"),
        aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),show.legend = T) +
   geom_vline(xintercept = 2006, colour = "azure4", linetype="longdash") +
   geom_line(aes(x=year, y=dat_x, quantile=NULL, linetype="Data"), size=1.02,alpha=1,colour="black") + #colour="black"
-  geom_line(data=filter(tod3111l,year>=2006, Sex=="Males"),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) +
+  geom_line(data=filter(tod3111l,year>=2006),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) + #, Sex=="Males"
   scale_fill_gradient(name="Estimates:\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + #, minor_breaks=c(seq(0.5,0.95,0.1),0.95)
   scale_linetype_manual(name="", values=c("solid","dotted")) +
-  scale_y_continuous(name="Out-migration rate (common logarithm)") +
+  scale_y_continuous(name="Out-migration probability", #(common logarithm)
+                     labels = function(x) format(round(10^(x),3), 
+                                                 trim=T,digits=3)) +
   scale_x_continuous(expand=expand_scale(mult = c(0, 0))) +
-  facet_grid( Reg_O ~ Reg_D, scales = "fixed",switch="y") +
+  facet_grid2( Reg_O ~ Reg_D, scales = "free_y", switch = "y",independent = "y" ) + #,switch="y"
+  # facet_grid( Reg_O ~ Reg_D, scales = "fixed", switch = "y") +
   guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0)))) +
   theme_bw() +
   theme(plot.title = element_text(lineheight=.8, face="bold"), 
         axis.text.x  = element_text(size=11,angle=90, vjust=0.5), 
-        axis.text.y = element_text(size=11),
+        axis.text.y = element_text(size=7),
         axis.title.x = element_text(size=14), 
         axis.title.y = element_text(size=14), 
         legend.text = element_text(size=14),
@@ -330,7 +423,8 @@ ggplot(data=tod3111l %>% filter(Sex=="Males"),
         strip.text.x = element_text(size=13), 
         strip.text.y = element_text(size=13),
         legend.position = "bottom")
-ggsave("plots/Figure2.pdf",device="pdf",width = 6.3, height = 3.4, scale=2.4)#width = 4, height = 4, scale=2.5
+ggsave("plots/Figure2.pdf",device="pdf",
+       width = 6.3, height = 3.4, scale=2.4)#width = 4, height = 4, scale=2.5
 
 #Plots: fertility####
 ggplot(data=tfr16,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
@@ -393,7 +487,7 @@ plot.lex0<-function(inp=lex0.04,nam){
           ) 
   ggsave(paste0("Plots/Figure4_",nam,".pdf"),device="pdf",width = 6.3, height = 1.2, scale=3)
 }
-plot.lex0(lex0.14,"14")
+plot.lex0(lex0.14,"02")
 # characteristics for the median LEx
 # filter(lex0.14,A=="0-4",year==2026,quantile%in%c(0.025,0.975), Sex=="Male",Reg=="ACT")
 
@@ -410,9 +504,10 @@ plot.imi.tot<-function(inp,nam){
     scale_fill_gradient(name="Estimates:\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + #, minor_breaks=c(seq(0.5,0.95,0.1),0.95)
     scale_size_manual(name="", values=c(1.02,0.5)) +
     scale_linetype_manual(name="", values=c("solid","dotted")) +
-    scale_y_continuous(name="log10(immigration counts)") + #"Counts (common logarithm)"
+    scale_y_continuous(name="immigration counts, 1000s",
+                       labels = function(x)round(10^x/1000,0)) + #"Counts (common logarithm)"
     scale_x_continuous(name="", expand=expand_scale(mult = c(0, 0))) +
-    facet_wrap( Sex ~ Reg, scales = "fixed", nrow=2) +
+    facet_grid( Sex ~ Reg, scales = "fixed", switch = "y") +
     guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0))),
            linetype=guide_legend(override.aes = list(linetype = c("solid","dotted"), size=c(1.02,0.5)))) +
     theme_bw() +
@@ -428,25 +523,26 @@ plot.imi.tot<-function(inp,nam){
           strip.text.x = element_text(size=13), 
           strip.text.y = element_text(size=13),
           legend.position = "bottom") 
-  # ggsave(paste0("plots/Figure5_",nam,".pdf"),plot = p, device="pdf",width = 6.3, height = 2, scale=3)
+  ggsave(paste0("plots/Figure5_",nam,".pdf"),plot = p, device="pdf",width = 6.3, height = 2, scale=3)
   return(p)
 }
-p_imi=plot.imi.tot(timi44l10,"44l10")
+p_imi=plot.imi.tot(timi031l,"031")
 
 #Plots: emigration####
-q=ggplot(data=temi44l10,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
+q=ggplot(data=temi02l,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
        aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),show.legend = T) +
   geom_line(aes(x=year, y=dat_x, quantile=NULL, linetype="Data"), size=1.02,alpha=1,colour="black") + #colour="black"
-  geom_line(data=filter(temi44l10,year>=2011),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) +
+  geom_line(data=filter(temi02l,year>=2011),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) +
   geom_vline(xintercept = 2011, colour = "azure4", linetype="longdash") +
   scale_fill_gradient(name="Estimates:\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + #, minor_breaks=c(seq(0.5,0.95,0.1),0.95)
   scale_size_manual(name="", values=c(1.02,0.5)) +
   scale_linetype_manual(name="", values=c("solid","dotted")) +
-  scale_y_continuous(name="log10(emigration rate)") + #"Rate (common logarithm)"
+  scale_y_continuous(labels = function(x)round(10^x,2)) + #"Rate (common logarithm)"
+  # annotation_logticks(scaled = T) +
   scale_x_continuous(expand=expand_scale(mult = c(0, 0))) +
-  facet_wrap( Sex ~ Reg, scales = "fixed", nrow=2) +
+  facet_grid( Sex ~ Reg, scales = "fixed", switch = "y") +
   guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0))),
          linetype=guide_legend(override.aes = list(linetype = c("solid","dotted"), size=c(1.02,0.5)))) +
   theme_bw() +
@@ -459,18 +555,19 @@ q=ggplot(data=temi44l10,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
         legend.title = element_text(size=14), 
         strip.text.x = element_text(size=13), 
         strip.text.y = element_text(size=13),
-        legend.position = "bottom") 
+        legend.position = "bottom") +
+  labs(y="emigration rate")
 # ggsave("plots/Figure6.pdf",device="pdf",width = 5, height = 3, scale=2.3)
-g=ggarrange(p_imi,q, ncol=1,nrow=2, labels = NULL, legend ="bottom", common.legend = TRUE, align = "v")
-ggexport(g,filename= paste0("Plots/Figure56.pdf"),width=18.9,height = 7.5)
+g=ggarrange(p_imi,NULL,q, ncol=1,nrow=3, labels = NULL, legend ="bottom", common.legend = TRUE, align = "hv",heights = c(1,-0.15,1))
+ggexport(g,filename= paste0("Plots/Figure56_1.pdf"),width=18.9,height = 7.5)
 
 # plots migration together####
-ggplot(data=migr44l10,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
+ggplot(data=migrl10,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
          aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),show.legend = T) +
   geom_line(aes(x=year, y=dat_x, quantile=NULL, linetype="Data"), size=1.02,alpha=1,colour="black") + #colour="black"
-  geom_line(data=filter(migr44l10,year>=2011),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) +
+  geom_line(data=filter(migrl10,year>=2011),aes(x=year, y=dat_x, quantile=NULL), size=1.02,alpha=1,colour="blue",show.legend=F) +
   geom_vline(xintercept = 2011, colour = "azure4", linetype="longdash") +
   scale_fill_gradient(name="Estimates:\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + #, minor_breaks=c(seq(0.5,0.95,0.1),0.95)
   scale_size_manual(name="", values=c(1.02,0.5)) +
@@ -523,10 +620,10 @@ plot.pop.time=function(nam){
           strip.text.y = element_text(size=13),
           legend.position = "bottom",
           ) 
-  # ggsave(paste0("plots/Figure7_",nam,".pdf"),plot=p,device="pdf",width = 6.3, height = 2, scale=3)
+#  ggsave(paste0("plots/Figure7_",nam,".pdf"),plot=p,device="pdf",width = 6.3, height = 2, scale=3)
 }
-p_pop=plot.pop.time("v2.0.1")
-
+# p_pop=plot.pop.time("v2.0.1")
+p_pop=plot.pop.time("v3.1")
 
 #Plots: population by time total####
 plot.pop.t.time=function(nam){
@@ -555,11 +652,12 @@ plot.pop.t.time=function(nam){
           strip.text.x = element_text(size=13), 
           strip.text.y = element_text(size=13),
           legend.position = "bottom") 
-  # ggsave(paste0("plots/Figure8",nam,".pdf"),plot=p,device="pdf",width = 5, height = 3, scale=1.5)
+#   ggsave(paste0("plots/Figure8",nam,".pdf"),plot=p,device="pdf",width = 5, height = 3, scale=1.5)
 }
-p_tot=plot.pop.t.time("v2.1")
-g21=ggarrange(p_tot,p_pop, ncol=2,nrow=1, labels = "auto", legend ="none", common.legend = TRUE, widths = c(1.5,8))
-ggexport(g2,filename= paste0("Plots/Figure7_rt.pdf"),width=15.75,height = 5)
+p_tot=plot.pop.t.time("v3.1")
+g21=ggarrange(p_pop,p_tot, ncol=2,nrow=1, labels = "auto", legend ="none", common.legend = TRUE, widths = c(8,1.5))
+ggexport(g21,filename= paste0("Plots/Figure7.pdf"),
+         width=15.75,height = 5)
 
 
 #Plots: Population by age/sex/region####
@@ -573,7 +671,7 @@ plot.pop.age=function(ye,nam){
                 #if (ye>2016) 2016 else ye)
     geom_line(aes(x=Age, y=ifelse(Sex=="Males",-ERP/1000,ERP/1000), linetype=Sex, quantile=NULL), size=1.02,alpha=1,colour="black") +
     scale_fill_gradient(name="Estimates\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + 
-    scale_linetype(name=paste0("ERP (",if (ye>2016) 2016 else ye,")")) +
+    scale_linetype(name=paste0("ERP (",if (ye[1]>2016) 2016 else ye[1],")")) +
     scale_y_continuous(labels=function(x) abs(x), name="Population in 1000s") +
     scale_x_discrete(breaks=levels(Pf.df1$Age)[c(seq(1,18,3),18)],labels=levels(Pf.df1$Age)[c(seq(1,18,3),18)],expand=expand_scale(mult = c(0, 0))) +
     guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0)))) +
@@ -591,10 +689,10 @@ plot.pop.age=function(ye,nam){
           legend.position = "bottom",
           panel.spacing.y = unit(1,"lines")) +
     coord_flip()
-  # ggsave(paste0("plots/Figure9_1626.pdf"),plot=p,device="pdf",width = 6.3, height = 2.0, scale=3)
+  ggsave(paste0("plots/Figure9_1626.pdf"),plot=p,device="pdf",width = 6.3, height = 2.0, scale=3)
 }  
 
-p_pa1626=plot.pop.age(c(2016,2026),"v2.0")
+p_pa1626=plot.pop.age(c(2016,2026),"v3.1")
 
 
 #unused
@@ -603,10 +701,56 @@ p_pa1626=plot.pop.age(c(2016,2026),"v2.0")
 
 
 #Tables####
+#internal migration forecasts description
+#check sex
+tod3111l %>% filter(Reg_O=="ACT",Reg_D=="NSW",quantile%in%c(0.025,0.5,0.975), year==2016) %>% View
+tod3111l %>% filter(Reg_O=="NSW",Reg_D=="NT",quantile%in%c(0.025,0.5,0.975), year==2016) %>% View
+#fertility TFR
+tfr16 %>% filter(year==2016) %>% View
+tfr16 %>% filter(year==2026) %>% View
+#immigration
+t_imi_tot=trans.imig.tot(t_imi44,FUN = identity)
+t_imi_tot %>% filter(Reg=="NSW",year==2026)
+#immigration totals plot
+t_imitot %>% 
+  ggplot(aes(x=year,y=x/1000,group=1,quantile=quantile)) + 
+  geom_fan(intervals=c(0.5,0.8,0.95)) + 
+  geom_interval(linetype="dotted", 
+                colour="darkgreen",
+                intervals=c(0),
+                show.legend = T) +
+  geom_vline(xintercept = 2011, colour = "azure4", linetype="longdash") +
+  geom_line(aes(x=year,y=dat_x/1000,quantile=NULL,linetype="Data"), 
+            size=1.02,alpha=1,colour="black") +
+  scale_fill_gradient(name="Estimates:\nPredictive Interval", low= "#11BD11", high="#BBFEBB", breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) +
+  scale_size_manual(name="", values=c(1.02,0.5)) +
+  scale_linetype_manual(name="", values=c("solid","dotted")) +
+  scale_y_continuous(name="immigration counts, 1000s") + 
+  scale_x_continuous(name="", expand=expand_scale(mult = c(0, 0))) +
+  guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0))),
+         linetype=guide_legend(override.aes = list(
+           linetype = c("solid","dotted"), 
+           size=c(1.02,0.5)))) +
+  theme_bw() + 
+  theme(plot.title = element_text(lineheight=.8, face="bold"), 
+                        axis.text.x = element_blank(),
+                        axis.text.y = element_text(size=13),
+                        # axis.title.x = element_text(size=14), 
+                        axis.title.x = element_blank(),
+                        axis.title.y = element_text(size=14), 
+                        legend.text = element_text(size=14),
+                        legend.title = element_text(size=14), 
+                        strip.text.x = element_text(size=13), 
+                        strip.text.y = element_text(size=13),
+                        legend.position = "bottom") 
+ggsave(paste0("plots/Figure_imitot.pdf"),device="pdf",width = 6.3, height = 2.3, scale=2)
+
 #ERP population totals by age/region/sex
 filter(ERP_pop30, year==2011) %>% arrange(Sex)
 filter(ERP_pop30, year==2016) %>% arrange(Sex)
 #Table with population forecasts
-Pf.df3 %>% spread(quantile, x) %>% filter(year==2016) %>% arrange(Sex) %>% select(-c(1:5,7,11)) %>% round(0)
+Pf.df3 %>% spread(quantile, x) %>% filter(year==2016) %>% arrange(Sex) %>% select(-c(1:5,7,11)) %>% '/'(1000) %>% round(0)
 
+PPD2016=Pf.df40 %>% filter(year==2016) %>% pull(x)
+sum(PPD2016<=ERP_pop4 %>% filter(year==2016) %>% pull(ERP))/1000
 
