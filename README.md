@@ -18,9 +18,11 @@ The repository contains four folders:
 
 - data (all data for Australia used in the illustration), 
 
-- models (all models presented in the manuscript written in Stan), 
+- models (all models presented in the manuscript written in Stan),
 
-- plots (plots created using the code). 
+- outputs (stan objects from bilinar models - empty)
+
+- plots (plots created using the code - empty). 
 
 # How to use the code
 
