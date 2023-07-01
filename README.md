@@ -8,7 +8,7 @@ Copyright: (anonymised), 2020
 
 This code will be available on GitHub
 
-All calculations were carried out in R 3.6.0 and rstan Version 2.19.2, GitRev: 2e1f913d3ca3
+All calculations were carried out in R 4.2.1 and rstan Version 2.26.18
 
 # Contents of the folder
 
