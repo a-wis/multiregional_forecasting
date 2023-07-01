@@ -24,13 +24,19 @@ The repository contains four folders:
 
 # How to use the code
 
-1. File 'data_processing.R' reads in and prepares all data required for computations. It can be sourced as is.
+1. File '1_data_processing.R' reads in and prepares all data required for computations. It can be sourced as is.
 
-2. Once the data are read in, file 'component_estimation.R' contains code to call Stan models in folder 'models' to prepare forecasts of population components. Each of the models requires preparing data in Stan format, initial values and running the model. The last few lines contain sample code for checking convergence.
+2. Once the data are read in, one can use frequentist approach to select parameters of the bi-log-linear model by using RMSE of the log-linear model fit or information criteria; this is available in '2_model_selection.R'.
 
-3. File 'create_projection.R' sources data from 'data_processing.R', functions for multiregional projection in file 'functions_multiregional_projection.R' and functions for transforming the results into data frames (file 'functions_forecasts_transformations.R') that can be used for producing outputs. Then, it takes the results of point 2. (outputs of log-bilinear component models) and produces population forecasts.
+3. File '3_component_estimation.R' contains code to call Stan models in folder 'models' to make forecasts of population components. Each of the models requires preparing data in Stan format, initial values and running the model. The last few lines contain sample code for checking convergence.
 
-4. File 'master_create_outputs.R' reads in the results of population components models (2.) and the population forecasts (3.), transforms the results and joins with input data for each component separately, and produces all plots in the manuscript. It is a masterfile that reproduces final outputs presented in the manuscript. 
+4. File '4_goodness_of_fit.R' contains several functions to visualise and check how well the models fit the data. 
+
+5. Function for transforming the results into data frames that can be used for producing outputs are in file '5.0_functions_forecasts_transformations.R', whereas functions for multiregional projection are in file '5.1_functions_multiregional_projection.R'. The results from 3. (outputs of log-bilinear component models) are taken into '5.2_create_projection.R' and produces population forecasts.
+
+6. File '6.1_master_create_outputs.R' reads in the results of population components models (2.) and the population forecasts (3.), transforms the results and joins with input data for each component separately, and reproduces all plots and tables in the manuscript (note: the outputs from the Bayesian bilinear models (3.) need to be in a folder 'outputs'.
+
+7. File '6.2_create_outputs_ageprofiles.R' transforms results and data to reproduce plots of age profiles in the Online Supplement. 
 
 # Other
 
@@ -40,7 +46,7 @@ The repository contains four folders:
 
 - we recommend using RStudio to use R files as chunks of code can be navigated by using Contents menu in the bottom of the 'Source' panel
 
-- the code contains samples of 1000 (two chains 500 each). These yield maximum Rhat ~1.2. Longer chains reduce it but take up resources (RAM and disc space). 
+- the code contains samples of 1000 (two chains 500 each). These yield maximum Rhat ~1.1. Longer chains reduce it but take up resources (RAM and disc space). 
 
 
 
