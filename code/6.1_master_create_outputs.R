@@ -30,7 +30,7 @@ source("code/5.0_functions_forecasts_transformations.R")
 mat_m=gen.forecast(inp = fit_m02,S=2,R=8,Fh = 15,Ti=19,Ag=18,fit.too =T)
 mat_f=gen.forecast(inp = fit_f01,S=1,R=8,Fh = 15,Ti=31,Ag=7,fit.too = T)
 mat_im=gen.forecast(inp = fit_imi031,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
-mat_em=gen.forecast(inp = fit_emi02,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
+mat_em=gen.forecast(inp = fit_emi03,S=2,R=8,Fh = 15,Ti=31,Ag=18,fit.too =T)
 mat_od=gen.forecast(inp = fit08_04,S=2,R=56,Fh = 3,Ti=6,Ag=17,fit.too =T)
 
 #creating population projection (or has to be read in, if previously saved)
@@ -115,7 +115,7 @@ tod3111l = t_od %>% mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
   mutate(quantile=as.numeric(quantile),
          levels=10^(x)) 
 
-# levels
+# levels (NOT USED)
 tod3111 = t_od %>% mutate(Reg_O=as.factor(Reg_O), Reg_D=as.factor(Reg_D)) %>%
   group_by(Reg_O,Reg_D,year,S,Iter) %>%
   summarise(x=(mean(x))) %>% 
@@ -396,7 +396,7 @@ Pf.df40 = Pf.df  %>% rename(Iter=Var1, Reg=Var2, A=Var3, S=Var4, year=Var5,x=Fre
 #
 
 #Plots: internal migration#####
-ggplot(data=tod3111l, #%>% filter(Sex=="Males"),
+plot_od=ggplot(data=tod3111l, #%>% filter(Sex=="Males"),
        aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),show.legend = T) +
@@ -415,7 +415,7 @@ ggplot(data=tod3111l, #%>% filter(Sex=="Males"),
   theme_bw() +
   theme(plot.title = element_text(lineheight=.8, face="bold"), 
         axis.text.x  = element_text(size=11,angle=90, vjust=0.5), 
-        axis.text.y = element_text(size=7),
+        axis.text.y = element_text(size=8),
         axis.title.x = element_text(size=14), 
         axis.title.y = element_text(size=14), 
         legend.text = element_text(size=14),
@@ -423,11 +423,11 @@ ggplot(data=tod3111l, #%>% filter(Sex=="Males"),
         strip.text.x = element_text(size=13), 
         strip.text.y = element_text(size=13),
         legend.position = "bottom")
-ggsave("plots/Figure2.pdf",device="pdf",
-       width = 6.3, height = 3.4, scale=2.4)#width = 4, height = 4, scale=2.5
+ggsave("plots/Figure2.pdf",device="pdf",plot = plot_od,
+       width = 6.4, height = 6.0, scale=1.6)#width = 4, height = 4, scale=2.5
 
 #Plots: fertility####
-ggplot(data=tfr16,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
+plot_f=ggplot(data=tfr16,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
        aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),size=.5,show.legend = T) +
@@ -439,7 +439,7 @@ ggplot(data=tfr16,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
   scale_linetype_manual(name="", values=c("solid","dotted")) +
   scale_y_continuous(name="Total Fertility Rate") +
   scale_x_continuous(expand=expand_scale(mult = c(0, 0))) +
-  facet_wrap( Reg ~., scales = "fixed", nrow=1) +
+  facet_wrap( Reg ~., scales = "fixed", nrow=2) +
   guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0))),
          linetype=guide_legend(override.aes = list(linetype = c("solid","dotted"), size=c(1.02,0.5)))) +
   theme_bw() +
@@ -455,7 +455,8 @@ ggplot(data=tfr16,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
         legend.position = "bottom"
 # panel.grid.major.y = element_blank(),
 )
-ggsave("plots/Figure3.pdf",device="pdf",width = 6.3, height = 1.2, scale=3)
+ggsave("plots/Figure3.pdf",plot = plot_f, 
+       device="pdf",width = 6.3, height = 5.3, scale=1.8)
 
 #Plots: mortality####
 plot.lex0<-function(inp=lex0.04,nam){
@@ -464,7 +465,7 @@ plot.lex0<-function(inp=lex0.04,nam){
     geom_fan(aes(group=Sex),intervals=c(0.5,0.8,0.95)) +
     scale_fill_gradient(name="Estimates:\nPredictive Interval", low= c("#11BD11"), high=c("#BBFEBB"), breaks=c(0.5,0.8,0.95), labels=c("50%","80%","95%")) + #, minor_breaks=c(seq(0.5,0.95,0.1),0.95)
     geom_interval(linetype="dotted",colour="darkgreen",intervals=c(0),show.legend = T) +
-    facet_wrap( Reg ~ ., scales = "free_y", nrow=1) +
+    facet_wrap( Reg ~ ., scales = "free_y", nrow=2) +
     #scale_linetype_manual(values=c("twodash", "dotted"))
     # scale_linetype_manual() +
     geom_line(aes(x=year, y=dat_x, group=Sex, colour=Sex, quantile=NULL), size=1.02,alpha=1) +
@@ -485,9 +486,10 @@ plot.lex0<-function(inp=lex0.04,nam){
           strip.text.y = element_text(size=13),
           legend.position = "bottom"
           ) 
-  ggsave(paste0("Plots/Figure4_",nam,".pdf"),device="pdf",width = 6.3, height = 1.2, scale=3)
 }
-plot.lex0(lex0.14,"02")
+plot_mort=plot.lex0(lex0.14,"02")
+ggsave(paste0("Plots/Figure4_","02",".pdf"),plot = plot_mort,
+       device="pdf",width = 6.3, height = 5.3, scale=1.8)
 # characteristics for the median LEx
 # filter(lex0.14,A=="0-4",year==2026,quantile%in%c(0.025,0.975), Sex=="Male",Reg=="ACT")
 
@@ -523,13 +525,14 @@ plot.imi.tot<-function(inp,nam){
           strip.text.x = element_text(size=13), 
           strip.text.y = element_text(size=13),
           legend.position = "bottom") 
-  ggsave(paste0("plots/Figure5_",nam,".pdf"),plot = p, device="pdf",width = 6.3, height = 2, scale=3)
   return(p)
 }
-p_imi=plot.imi.tot(timi031l,"031")
+plot_imi=plot.imi.tot(timi031l,"031")
+ggsave(paste0("plots/Figure5_","031",".pdf"),plot = plot_imi, device="pdf",width = 6.3, height = 4.5, scale=2)
+
 
 #Plots: emigration####
-q=ggplot(data=temi02l,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
+plot_emi=ggplot(data=temi02l,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
        aes(x=year, y=x,  group=1,quantile=quantile)) +
   geom_fan(intervals=c(0.5,0.8,0.95)) +
   geom_interval(linetype="dotted", colour="darkgreen",intervals=c(0),show.legend = T) +
@@ -558,8 +561,8 @@ q=ggplot(data=temi02l,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
         legend.position = "bottom") +
   labs(y="emigration rate")
 # ggsave("plots/Figure6.pdf",device="pdf",width = 5, height = 3, scale=2.3)
-g=ggarrange(p_imi,NULL,q, ncol=1,nrow=3, labels = NULL, legend ="bottom", common.legend = TRUE, align = "hv",heights = c(1,-0.15,1))
-ggexport(g,filename= paste0("Plots/Figure56_1.pdf"),width=18.9,height = 7.5)
+g=ggarrange(plot_imi,NULL,plot_emi, ncol=1,nrow=3, labels = NULL, legend ="bottom", common.legend = TRUE, align = "hv",heights = c(1,-0.05,1))
+ggexport(g,filename= paste0("Plots/Figure56_1.pdf"),width=14,height = 14)
 
 # plots migration together####
 ggplot(data=migrl10,# %>% filter(S=="F"), #lex0.04 %>% select(-A)
@@ -605,7 +608,9 @@ plot.pop.time=function(nam){
     scale_linetype_manual(name="", values=c("solid","dotted")) +
     scale_y_continuous(name="Population in 100,000s") +
     scale_x_continuous(expand=expand_scale(mult = c(0, 0))) +
-    facet_wrap( Sex ~ Reg, scales = "free_y",nrow=2) +
+    facet_wrap2(Sex ~ Reg, nrow = 4,
+                scales = "free_y", 
+                strip = strip_split(c("right","top"))) +
     guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0))),
            linetype=guide_legend(override.aes = list(linetype = c("solid","dotted"), size=c(1.02,0.5)))) +
     theme_bw() +
@@ -620,10 +625,11 @@ plot.pop.time=function(nam){
           strip.text.y = element_text(size=13),
           legend.position = "bottom",
           ) 
-#  ggsave(paste0("plots/Figure7_",nam,".pdf"),plot=p,device="pdf",width = 6.3, height = 2, scale=3)
+#  
 }
 # p_pop=plot.pop.time("v2.0.1")
-p_pop=plot.pop.time("v3.1")
+plot_pop=plot.pop.time("v3.1")
+# ggsave(paste0("plots/Figure7.pdf"),plot=plot_pop,device="pdf",width = 6.3, height = 2, scale=3)
 
 #Plots: population by time total####
 plot.pop.t.time=function(nam){
@@ -654,10 +660,10 @@ plot.pop.t.time=function(nam){
           legend.position = "bottom") 
 #   ggsave(paste0("plots/Figure8",nam,".pdf"),plot=p,device="pdf",width = 5, height = 3, scale=1.5)
 }
-p_tot=plot.pop.t.time("v3.1")
-g21=ggarrange(p_pop,p_tot, ncol=2,nrow=1, labels = "auto", legend ="none", common.legend = TRUE, widths = c(8,1.5))
+plot_poptot=plot.pop.t.time("v3.1")
+g21=ggarrange(plot_pop,plot_poptot, ncol=2,nrow=1, labels = "auto", legend ="none", common.legend = TRUE, widths = c(4,2.3))
 ggexport(g21,filename= paste0("Plots/Figure7.pdf"),
-         width=15.75,height = 5)
+         width=12,height = 9)
 
 
 #Plots: Population by age/sex/region####
@@ -675,7 +681,10 @@ plot.pop.age=function(ye,nam){
     scale_y_continuous(labels=function(x) abs(x), name="Population in 1000s") +
     scale_x_discrete(breaks=levels(Pf.df1$Age)[c(seq(1,18,3),18)],labels=levels(Pf.df1$Age)[c(seq(1,18,3),18)],expand=expand_scale(mult = c(0, 0))) +
     guides(fill=guide_legend(override.aes = list(linetype = c(0,0,0)))) +
-    facet_grid( year ~ Reg, scales = "free_x") + 
+    # facet_grid( year ~ Reg, scales = "free_x") + 
+    facet_wrap2(year ~ Reg, nrow = 4,
+                scales = "free_x", 
+                strip = strip_split(c("right","top"))) +
     theme_bw() +
     theme(plot.title = element_text(lineheight=.8, face="bold"), 
           axis.text.x  = element_text(size=13,angle=90, vjust=0.5), 
@@ -689,11 +698,10 @@ plot.pop.age=function(ye,nam){
           legend.position = "bottom",
           panel.spacing.y = unit(1,"lines")) +
     coord_flip()
-  ggsave(paste0("plots/Figure9_1626.pdf"),plot=p,device="pdf",width = 6.3, height = 2.0, scale=3)
 }  
 
-p_pa1626=plot.pop.age(c(2016,2026),"v3.1")
-
+plot_age1626=plot.pop.age(c(2016,2026),"v3.1")
+ggsave(paste0("plots/Figure9_1626.pdf"),plot=plot_age1626,device="pdf",width = 5, height = 6, scale=2.2)
 
 #unused
 # g3=ggarrange(g21,p_pa1626, ncol=1,nrow=2, labels = c("","c"), legend ="bottom", common.legend = TRUE, heights = c(1.1,1))
