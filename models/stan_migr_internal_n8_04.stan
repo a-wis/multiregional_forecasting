@@ -80,8 +80,8 @@ transformed parameters {
   }
   OD_b[Co] = 1-sum(ben2[1:(Co-1)]);
   
-  k1[1] = intercept[1] + slope[1]*k1_rnd[1]*sigk[1];//k1_0; + ;
-  k2[1] = intercept[2] + slope[2]*k2_rnd[1]*sigk[2];// + ;k2_0;
+  k1[1] = intercept[1] + k1_rnd[1]*sigk[1];//k1_0; + ;
+  k2[1] = intercept[2] + k2_rnd[1]*sigk[2];// + ;k2_0;
   for (i in 2:(T-1)) {
     k1[i] = intercept[1] + slope[1]*k1[i-1] + k1_rnd[i]*sigk[1];
     k2[i] = intercept[2] + slope[2]*k2[i-1] + k2_rnd[i]*sigk[2];

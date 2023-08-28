@@ -52,7 +52,7 @@ transformed parameters {
     }
   }
   
-  #trick to improve mixing
+  //trick to improve mixing
   for (i in 1:(R*N*T)){
     mpd[i] = mmd[i] + sig1*snd1[i] + lp1[i];
   }
@@ -114,7 +114,7 @@ model {
 }
 
 generated quantities {
-  #forecasting
+  //forecasting
   real kf[F];
   real mmd_f[R*N*F];
 
