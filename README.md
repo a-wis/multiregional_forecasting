@@ -2,11 +2,9 @@
 
 This file describes the use of the code for preparing probabilistic subnational population forecasts presented in the manuscript
 
-**A unified framework for probabilistic forecasts of subnational populations**
+**Multiregional population forecasting: A unifying probabilistic approach for modelling the components of change**
 
 Copyright: Arkadiusz Wiśniowski, 2023
-
-This code will be available on GitHub
 
 All calculations were carried out in R 4.2.1 and rstan Version 2.26.18
 
@@ -34,7 +32,7 @@ The repository contains four folders:
 
 4. File '4_goodness_of_fit.R' contains several functions to visualise and check how well the models fit the data. 
 
-5. Function for transforming the results into data frames that can be used for producing outputs are in file '5.0_functions_forecasts_transformations.R', whereas functions for multiregional projection are in file '5.1_functions_multiregional_projection.R'. The results from 3. (outputs of log-bilinear component models) are taken into '5.2_create_projection.R' and produces population forecasts.
+5. Function for transforming the results into data frames that can be used for producing outputs are in file '5.0_functions_forecasts_transformations.R', whereas functions for multiregional projection are in file '5.1_functions_multiregional_projection.R'. The results from 3. (outputs of log-bilinear component models) are taken into '5.2_create_projection.R', which produces population forecasts.
 
 6. File '6.1_master_create_outputs.R' reads in the results of population components models (2.) and the population forecasts (3.), transforms the results and joins with input data for each component separately, and reproduces all plots and tables in the manuscript (note: the outputs from the Bayesian bilinear models (3.) need to be in a folder 'outputs'.
 
