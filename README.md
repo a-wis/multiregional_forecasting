@@ -2,9 +2,15 @@
 
 This file describes the use of the code for preparing probabilistic subnational population forecasts presented in the manuscript
 
-**Multiregional population forecasting: A unifying probabilistic approach for modelling the components of change**
+**Multiregional population forecasting: A unifying probabilistic approach for modelling the components of change**, *European Journal of Population*
 
-Copyright: Arkadiusz Wiśniowski, 2023
+[Arkadiusz Wiśniowski](https://www.research.manchester.ac.uk/portal/a.wisniowski.html)<sup>1*</sup>, James Raymer<sup>2
+
+<sup>1</sup> *Department of Social Statistics, University of Manchester*
+
+<sup>2</sup> *School of Demography, Australian National University*
+
+Copyright: Arkadiusz Wiśniowski, 2025
 
 All calculations were carried out in R 4.2.1 and rstan Version 2.26.18
 
